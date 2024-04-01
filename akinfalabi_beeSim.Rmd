@@ -1,82 +1,173 @@
 ---
-title: "Monte Carlo Simulation"
-author: "Ahmed Tijani Akinfalabi"
-date: "10-01-2024"
-output: html_document
+title: "Beesim Report"
+author: "Ahmed Tijani Akinfalabi, Benedikt Haarscheidt, Lisa Skroblin, Jaesub Kim"
+date: "`r Sys.Date()`"
+output: 
+  pdf_document:
+    toc: true
+    toc_depth: 2
+  html_document:
+    toc: true
+    toc_depth: 5
+    df_print: paged
+bibliography: beesim.bib
 ---
 
-#```{r setup, include=FALSE}
-#knitr::opts_chunk$set(echo = TRUE)
-#```
-
-
-```{r fig=TRUE,fig.width=16,fig.height=9, eval=FALSE}
-set.seed(123)
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(knitr)
 source('beesim.R')
+options(repos = c(CRAN = "https://cloud.r-project.org"))
+#install.packages("kableExtra")
+library(kableExtra)
+```
+
+# Abstract
+
+Monte Carlo simulation (MCS) is a versatile technique used to estimate outcomes of uncertain events, widely applicable in fields like ecology and infectious diseases. Using the principles of MCS, we modeled beetle population dynamics in a closed ecosystem undergoing seasonal changes. Seasonal changes are influenced by changes in food quantity and habitat. Our results show significant oscillations in beetle populations, similar to those commonly seen in predator-prey relationships. The main cause of fluctuation is population decline due to habitat loss, and it is actually thought to have a significant impact on population change. Our results provide insight into ecological dynamics by accounting for randomness through a stochastic approach in MCSs. Our study provides evidence that MCSs are suitable for dynamic ecological modeling involving complex interactions, although they are limited in perfectly depicting dynamic ecological change due to limited parameters and parameter invariance.
+
+
+# Introduction
+
+MCS is a technique primarily used to estimate possible outcomes of uncertain events. Operating by modeling the probability of various outcomes in systems where predictions are challenging due to the intervention of random variables, this method finds widespread application in predicting unpredictable systems, with ecosystems being a quintessential example.
+
+MCS is versatile, applicable across various fields such as economics, physics, biology, and more. From an ecological perspective, MCS can be employed to model and predict the dynamic nature of ecosystems, considering diverse environmental factors and interactions. For instance, it can be used to predict changes in the population of a species due to random variables related to seasons, food availability, or predator-prey relationships(@marini2016role, @sinha2020modeling, @sole1992nonlinear, @fullman2021simulation). Furthermore, MCS has gained attention, especially in the context of infectious diseases following the COVID-19 pandemic (@triambak2021random, @maltezos2021novel). Numerous variables related to infectious diseases are greatly affected by seasonal changes (@kakoullis2023influenza). Variables such as seasonal floating population, temperature changes and resulting changes in immunity, and people's activity radius can have a significant impact on the infected population.
+
+MCS plays a crucial role in studying population dynamics at the cellular level. Similar to simulations in animal ecosystems, MCS is consistently used to predict the dynamics of cell populations based on interactions between cells (such as metabolic byproducts, physical contact, nutrients, competition, and space)(@charlebois2019modeling). Predicting bacterial population growth, which is essential in the production and distribution of food, is another critical application of MCS (@montville2005monte, @lau2022development). In addition, it can be widely used in research related to protein design and dynamics, which are very difficult to directly observe at the molecular level (@foffi2013macromolecular, @michael2022much).
+
+Apart from its versatility, one of the significant advantages of MCS is its cost-effectiveness, as it allows for experimentation without the need for actual physical experiments. Additionally, MCS often serves as a foundation for other simulations due to its clear principles. Numerous models have been written based on MCS (@bermudez1989analysis, @de2023mam).
+
+Inspired by the principles of MCS, we have constructed a model to predict how the population of beetles evolves and persists in a closed ecosystem undergoing seasonal environmental changes. Ecosystems, sensitive to changes in the natural environment, provide an ideal backdrop for investigating adaptability and sensitivity within ecological systems by introducing specific environmental changes into our ecological model.
+
+The diverse examples mentioned earlier closely align with the simple model we have established for this report. The seasonal dependencies of environmental variables in cases of infectious diseases are strikingly similar to the environmental variables in our model. Similarly, the examples of interactions among cell populations have analogies to the dynamics of ecosystems, and are ultimately not all that different from what we are investigating in this report.
+
+In the Results and Discussion section of this report, we will discuss the overall changes resulting from variations in food distribution and environmental changes. Through this, we aim to enhance our understanding of how these two variables contribute to the complexity of beetle population dynamics. Ultimately, we may gain insights into how to model species behavior in less predictable environments. Furthermore, based on this understanding, we hope to increase our understanding of MCSs that can be applied to various fields, and to make a significant contribution to the overall theoretical and practical framework for our future research activities.
+
+
+
+# Method
+
+The simulation was implemented using the BeeSim framework, designed to model a population of beetles within an ecosystem. The primary objective was to introduce dynamic seasonal changes in the availability of food resources, mimicking natural variations in environmental conditions.
+
+Seasonal Food Amount Changes:
+To incorporate seasonal variations in food availability, we developed 4 (four) functions;
+
+• seasons(iter) function: This function calculates a seasonal value based on the iteration (iter) in the simulation. It uses a sine function to simulate a seasonal pattern, with the period of the sine wave corresponding to 53 iterations (assuming a year with 53 time steps).
+
+• seasons_lakes(iter): Similar to the first function, this calculates a seasonal value for lakes based on the iteration. It uses a sine function to generate a seasonal pattern with a period of 53 iterations.
+
+• find_offset_intersections(): This function finds the intersections (zero-crossings) between the seasonal patterns of lakes and the bee simulation. It iterates through the monitoring data, checks for zero-crossings, and records the x-values (iterations) where these intersections occur. It uses linear interpolation (approxfun) to estimate the exact iteration where the zero-crossing occurs.
+
+• seasons_lake(): This function is responsible for determining the seasonal variation in the lake area within the simulation. This function calculates the lake area based on a sinusoidal curve, and the resulting value is intended to represent the changing lake conditions over time.
+
+Furthermore, the the drawLandscape() function was modified to enable dynamic visual representation with regards to the seasons. It incorporates seasonality by adjusting the color of trees and the size of the lake based on the value returned by seasons_lake(). Also, the BeeSim$iter() function was modified to include seasons indicator in the monitor plot and updated with information about the current iteration, the number of beetles, the number of food units, and the week of the year.
+
+This enhancements and modifications provide insights into the temporal dynamics of food availability, allow for the analysis of the beetles' interactions with their environment and also allow the simulation to dynamically adjust the quantity of available food items throughout the course of the simulated year.
+
+This monitoring approach enables a comprehensive analysis of the impact of seasonal changes on the beetle population and their response to varying food resources.
+
+# Results
+
+The starting point of our analysis of the annual cycle of the beetle population is set at the beginning of the wet season (green trees, lake size at half). To allow the population to stabilize from potentially imbalanced starting conditions, we will not look at year 1 but instead allow the simulation to run for 212 iterations (weeks), i.e. 5 years, first.
+
+```{r, echo=FALSE,fig=TRUE,fig.width=16,fig.height=11}
+set.seed(111)
+
 par(mfrow=c(2,3),mai=c(0.2,0.2,0.7,0.1))
-
-BeeSim$new(20)   # create 20 agents
+BeeSim$new(20)
 BeeSim$drawBeetles()
-BeeSim$iter()
-for (i in 1:5) { BeeSim$iter() }
+for (i in 1:212) { BeeSim$iter(debug=FALSE) ; BeeSim$mating(debug=FALSE)}
 BeeSim$drawBeetles()
-
-for (i in 1:10) { BeeSim$iter() ; BeeSim$mating()}
+for (i in 1:13) { BeeSim$iter(debug=FALSE) ; BeeSim$mating(debug=FALSE)}
 BeeSim$drawBeetles()
-
-for (i in 1:35) { BeeSim$iter(debug=FALSE) ; BeeSim$mating(debug=FALSE)}
+for (i in 1:13) { BeeSim$iter(debug=FALSE) ; BeeSim$mating(debug=FALSE)}
 BeeSim$drawBeetles()
-
-for (i in 1:35) { BeeSim$iter(debug=FALSE) ; BeeSim$mating(debug=FALSE)}
+for (i in 1:13) { BeeSim$iter(debug=FALSE) ; BeeSim$mating(debug=FALSE)}
 BeeSim$drawBeetles()
-
 BeeSim$plotMonitor()
 ```
 
+**Figure 1.A** shows the original 20 beetles at the onset of the simulation, **Figure 1.B** shows the population at 212 weeks. The number of food items is similar, and the population of beetles has doubled, but most strikingly the distribution of the beetles has changed. Whereas originally the beetles were spread out across the entire area, they now cluster around the smaller food source (lower left quadrant). This does not change much throughout the following year.
+At the middle of the wet season (**Figure 1.C**, iteration 225), almost half the beetles have died while both the lake size and the amount of food have increased. 
+At the turn of wet season to dry season (**Figure 1.D**, iteration 238), the amounts of food have increased exponentially and the lake area has also grown. The beetles population has also increased.
+Finally, at the height of dry season (**Figure 1.E**, iteration 251), the lake area and the available food have both decreased slightly while the beetle population has grown to more than double the number of animals in the height of the dry season.
+**Figure 1.F** shows the fluctuation of food and beetles over the course of five years. The gray line represents the number of food, and the blue line represents the population of Beetles. Seasonal changes are demarcated by green lines. Both oscillate with the same period (matching the seasons), but the differences of maxima and minima are much more extreme in the amounts of food than in the beetles (similar minima of 25-50 but maxima of 700-1000 for the food and 100-180 for the beetles). The oscillation of the beetle population is about half a season behind that of the food.
 
-```{r}
-set.seed(123)
+## Stability of the above results across repeated simulations 
 
-n = 20
-beetles=data.frame(x=runif(n,min=0,max=50),
-                  y=runif(n,min=0,max=50),
-                  sex=c("F","M")[rbinom(n,1,p=0.5)+1],
-                  color=c("red","orange")[rbinom(n,1,p=c(0.8,0.2))+1],
-                  points=sample(4:7,n,replace=TRUE),
-                  age=sample(0:5,n,replace=TRUE),
-                  energy=rep(10,n))
+In order to establish whether the above pattern is the typical development of the beetle population over five years, we ran the simulation 50 times with the same starting parameters. 
 
-beetles
+```{r, echo=FALSE}
 
-gender = table(beetles$sex)
-gender    # I realized the number of females are more than the male. 3:1
+set.seed(111)
 
-food=data.frame(x=c(rnorm(10,mean=12,sd=5),rnorm(20,mean=42,sd=5),runif(20,0,50)),
-               y=c(rnorm(10,mean=12,sd=5),rnorm(20,mean=42,sd=5),runif(20,0,50)),
-               age=rep(0,50))
+runs=5 #50
+iter=106 #265
+
+results <- data.frame(
+  Run = numeric(runs),
+  LastDrySeason_Beetles = numeric(runs),
+  LastWetSeason_Beetles = numeric(runs)
+)
+
+for (run in 1:runs) {
   
-food
+  BeeSim$new(20)
+  
+  for (i in 1:iter) {
+    BeeSim$iter(debug=FALSE)
+    BeeSim$mating(debug=FALSE)
+  }
+  
+  # Store results in the data frame
+  results$Run[run] <- run
+  results$LastDrySeason_Beetles[run] <- BeeSim$monitor[iter, 'beetles']
+  results$LastWetSeason_Beetles[run] <- BeeSim$monitor[iter-27, 'beetles']
+}
+```
 
-monitor=data.frame(iter=0,beetles=nrow(beetles),food=nrow(food))
-
-monitor  
+```{r results='asis',echo=FALSE}
+results %>%
+  kbl(caption = "Population of Beetles in Last Seaseon", col.names = c("Run","Dry Season","Wet Season")) %>%
+  kable_classic_2(full_width = F, html_font = "Cambria")
 ```
 
 
-```{r fig=TRUE,fig.width=16,fig.height=9}
-set.seed(123)
-source('beesim.R')
-par(mfrow=c(2,3),mai=c(0.2,0.2,0.7,0.1))
-BeeSim$new(20)   # create 20 agents
-BeeSim$drawBeetles()
-BeeSim$iter()
-for (i in 1:5) { BeeSim$iter() }
-BeeSim$drawBeetles()
-for (i in 1:10) { BeeSim$iter() ; BeeSim$mating()}
-BeeSim$drawBeetles()
-for (i in 1:35) { BeeSim$iter(debug=FALSE) ; BeeSim$mating(debug=FALSE)}
-BeeSim$drawBeetles()
-for (i in 1:35) { BeeSim$iter(debug=FALSE) ; BeeSim$mating(debug=FALSE)}
-BeeSim$drawBeetles()
-BeeSim$plotMonitor()
+**Table 1** shows the numbers of beetles at the height of the fifth dry and wet season (after 238 and 265 iterations respectively).
+
+
+```{r, echo=FALSE}
+# Calculate statistics
+summary_stats <- data.frame(
+  Metric = c("Max", "Min", "Median", "Mean", "SD"),
+  LastDrySeason = c(max(results$LastDrySeason_Beetles), min(results$LastDrySeason_Beetles), median(results$LastDrySeason_Beetles), mean(results$LastDrySeason_Beetles), sd(results$LastDrySeason_Beetles)),
+  LastWetSeason = c(max(results$LastWetSeason_Beetles), min(results$LastWetSeason_Beetles), median(results$LastWetSeason_Beetles), mean(results$LastWetSeason_Beetles), sd(results$LastWetSeason_Beetles))
+)
+#print(t(summary_stats))
 ```
+
+```{r results='asis',echo=FALSE}
+options(digits = 4)
+summary_stats %>%
+  kbl(caption = "Summary of Beetles Population", col.names = c("","Dry Season","Wet Season")) %>%
+  kable_classic_2(full_width = F, html_font = "Cambria")
+```
+
+
+**Table 2** shows the minimum and maximum,the median and the mean of beetle populations across all 50 iterations by season. It also includes the standard deviation.
+While the minima and maxima do not differ much between the seasons, the median and mean values of the wet season are only about 60% of the respective values in the dry season. The standard deviation for the dry and wet season are 25.21 and 20.67.
+
+
+# Discussion
+
+The oscillation in the beetle population has a period matching the season and a shift in the curve of about half a season compared to the food curve. This result strongly resembles that of a predator-prey-relationship modeled by the Lotka-Volterra-equations. In such a model, the increase in the "prey population", here the amount of available food, is linearly dependent to its own size but the decrease is linearly dependent on both the size of its own as well as the predator population. The growth of the predator population is positively linearly correlated to its own size as well as that of the prey population, and negatively linearly correlated to the size of the prey population.
+While in our model the decrease in food is (in part) dependent on the number of beetles, the "creation" of food is not. Instead it correlates to the seasons, giving it is sinus-shaped curve.
+The size of the beetle population is only indirectly dependent on the amount of food insofar as beetles might starve (decreasing population size) and can only reproduce when they have eaten enough. This adds an element of randomness to the model that the Lotka-Volterra-equations lack.
+It seems that the Monte-Carlo-Simulation is a stochastic alternative to modeling the predator-prey-relationship deterministically using the Lotka-Volterra-equations.
+
+The beetle population in our model is also decreased when beetles drown in the lake. While the size of the lake and therefore the likeliness of beetles drowning is not dependent on the amount of food, it is dependent on the season. During the wet season, when there is increased food regrowing, the lake area increases while during the dry season, when food regrowing is rarer, the lake area diminishes. So there are contradictory effects on the beetle population during each season (either a large food supply and a maximal lake area or a smaller food supply and a minimal lake area). We can conclude that (given the parameters used for our model) the amount of available food is affecting the beetle population more strongly since the beetle population grows with the food supply. This effect is somewhat delayed since the beetles have to "find" and eat the food first and then "find" a mate and reproduce. If the effect of the lake size increase was more impactful than the food supply, the numbers of beetles would decrease simultaneously with the lake size, i.e. with the passing of the wet season.
+
+Despite the parameters of the simulation being constant, the outcome for the beetle population varied greatly between the 50 runs. While in some runs the population was thriving with more than 100 individuals, in other runs it barely survived. There was however not a single run in which the beetle population died out.
+It would be interesting to see if these small populations can stabilize over a longer time span, e.g. 10 years or 530 iterations, since there is more food available per beetle in smaller populations. On the other hand, in such a small population, there is a lower chance of beetles "finding" each other to mate and reproduce.
+
+Overall, the MCS proved to be suitable for modeling beetle population dynamics. It allows for easy extensions to include additional factors in an already existing model and is more versatile and less computationally intense than the Lotka-Volterra-equations that focus primarily on predator-prey-relationships and require differential equations to be solved. However, it could not provide a definite answer as to how a beetle population will develop under the chosen parameters given the wide span between possible outcomes and the high standard deviation. This might be solved by more runs over more iterations to create a more statistically sound result but it could also simply be due to the randomness inherent to the MCS model.
